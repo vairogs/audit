@@ -16,6 +16,7 @@ use ReflectionClass;
 use Vairogs\Bundle\VairogsBundle;
 use Vairogs\Component\Functions\Text\_SnakeCaseFromCamelCase;
 
+use function array_key_exists;
 use function strtolower;
 
 // #[AsDoctrineListener(event: Events::preUpdate)]
@@ -27,7 +28,7 @@ readonly class AuditListener
     public function __construct(
         private EntityManagerInterface $entityManager,
     ) {
-        $this->snake = (new class() {
+        $this->snake = (new class {
             use _SnakeCaseFromCamelCase;
         });
     }
