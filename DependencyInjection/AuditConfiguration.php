@@ -17,11 +17,6 @@ use Vairogs\Bundle\DependencyInjection\AbstractDependencyConfiguration;
 
 final class AuditConfiguration extends AbstractDependencyConfiguration
 {
-    public function usesDoctrine(): bool
-    {
-        return true;
-    }
-
     public function registerPreConfiguration(
         ContainerConfigurator $container,
         ContainerBuilder $builder,
@@ -34,5 +29,10 @@ final class AuditConfiguration extends AbstractDependencyConfiguration
                 ],
             ]);
         }
+    }
+
+    public function usesDoctrine(): bool
+    {
+        return true;
     }
 }

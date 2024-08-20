@@ -12,6 +12,7 @@
 namespace Vairogs\Component\Audit\EventListener;
 
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
+use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Schema\TableDiff;
@@ -42,8 +43,17 @@ readonly class AuditListener
         });
     }
 
-    public function preUpdate(PreUpdateEventArgs $args): void
-    {
+    public function postFlush(
+        PostFlushEventArgs $args,
+    ): void {
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function preUpdate(
+        PreUpdateEventArgs $args,
+    ): void {
         $entity = $args->getObject();
 
         $auditTable = $this->getAuditTableName($entity);
@@ -55,21 +65,18 @@ readonly class AuditListener
         }
     }
 
-    public function postFlush(PostFlushEventArgs $args): void
-    {
-    }
-
-    private function auditTableExists($auditTable): bool
-    {
+    /**
+     * @throws Exception
+     */
+    private function auditTableExists(
+        $auditTable,
+    ): bool {
         return $this->entityManager->getConnection()->createSchemaManager()->tablesExist([$auditTable]);
     }
 
-    private function getAuditTableName(
-        object $entity,
-    ): string {
-        return VairogsBundle::VAIROGS . '.audit_' . strtolower($this->snake->snakeCaseFromCamelCase((new ReflectionClass($entity))->getShortName()));
-    }
-
+    /**
+     * @throws Exception
+     */
     private function createAuditTable(
         object $entity,
     ): void {
@@ -98,8 +105,18 @@ readonly class AuditListener
         $schemaManager->createTable($auditTable);
     }
 
-    private function updateAuditTableSchema(object $entity): void
-    {
+    private function getAuditTableName(
+        object $entity,
+    ): string {
+        return VairogsBundle::VAIROGS . '.audit_' . strtolower($this->snake->snakeCaseFromCamelCase((new ReflectionClass($entity))->getShortName()));
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function updateAuditTableSchema(
+        object $entity,
+    ): void {
         $entityFields = $this->entityManager->getClassMetadata($entity::class)->fieldMappings;
         $schemaManager = $this->entityManager->getConnection()->createSchemaManager();
         $auditTable = $this->getAuditTableName($entity);
@@ -126,7 +143,7 @@ readonly class AuditListener
         }
 
         if (!empty($addedColumns)) {
-            $tableDiff = new TableDiff(new Table($auditTable), $addedColumns, [], [], [], [], [], [], [], [], [], []);
+            $tableDiff = new TableDiff(new Table($auditTable), $addedColumns, [], [], [], [], [], [], [], [], []);
             $schemaManager->alterTable($tableDiff);
         }
     }
