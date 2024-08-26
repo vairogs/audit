@@ -23,8 +23,8 @@ use Doctrine\ORM\Event\PostFlushEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 use ReflectionClass;
-use Vairogs\Bundle\VairogsBundle;
 use Vairogs\Component\Functions\Text\_SnakeCaseFromCamelCase;
+use Vairogs\Component\Functions\Vairogs;
 
 use function array_key_exists;
 use function strtolower;
@@ -108,7 +108,7 @@ readonly class AuditListener
     private function getAuditTableName(
         object $entity,
     ): string {
-        return VairogsBundle::VAIROGS . '.audit_' . strtolower($this->snake->snakeCaseFromCamelCase((new ReflectionClass($entity))->getShortName()));
+        return Vairogs::VAIROGS . '.audit_' . strtolower($this->snake->snakeCaseFromCamelCase((new ReflectionClass($entity))->getShortName()));
     }
 
     /**
