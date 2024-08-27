@@ -31,16 +31,16 @@ use function strtolower;
 
 // #[AsDoctrineListener(event: Events::preUpdate)]
 // #[AsDoctrineListener(event: Events::postFlush)]
-readonly class AuditListener
+final class AuditListener
 {
-    private object $snake;
+    private static ?object $snake = null;
 
     public function __construct(
-        private EntityManagerInterface $entityManager,
+        private readonly EntityManagerInterface $entityManager,
     ) {
-        $this->snake = (new class {
+        self::$snake = new class {
             use _SnakeCaseFromCamelCase;
-        });
+        };
     }
 
     public function postFlush(
@@ -88,14 +88,14 @@ readonly class AuditListener
         $auditTable->addColumn('id', Types::INTEGER, ['autoincrement' => true]);
         $auditTable->addColumn('created_at', Types::DATETIME_IMMUTABLE);
 
-        $auditTableName = strtolower($this->snake->snakeCaseFromCamelCase((new ReflectionClass($entity))->getShortName()));
+        $auditTableName = strtolower(self::$snake->snakeCaseFromCamelCase((new ReflectionClass($entity))->getShortName()));
 
         foreach ($entityFields as $field => $mapping) {
             if ('id' === $field) {
                 $auditTable->addColumn($auditTableName . '_id', $mapping['type'], ['notnull' => false]);
             }
 
-            $field = $this->snake->snakeCaseFromCamelCase($field);
+            $field = self::$snake->snakeCaseFromCamelCase($field);
 
             $auditTable->addColumn($field . '_old', $mapping['type'], ['notnull' => false]);
             $auditTable->addColumn($field . '_new', $mapping['type'], ['notnull' => false]);
@@ -108,7 +108,7 @@ readonly class AuditListener
     private function getAuditTableName(
         object $entity,
     ): string {
-        return Vairogs::VAIROGS . '.audit_' . strtolower($this->snake->snakeCaseFromCamelCase((new ReflectionClass($entity))->getShortName()));
+        return Vairogs::VAIROGS . '.audit_' . strtolower(self::$snake->snakeCaseFromCamelCase((new ReflectionClass($entity))->getShortName()));
     }
 
     /**
@@ -124,12 +124,13 @@ readonly class AuditListener
         $columns = $schemaManager->listTableColumns($auditTable);
 
         $addedColumns = [];
+
         foreach ($entityFields as $field => $mapping) {
             if ('id' === $field) {
                 continue;
             }
 
-            $field = $this->snake->snakeCaseFromCamelCase($field);
+            $field = self::$snake->snakeCaseFromCamelCase($field);
 
             if (!array_key_exists($field . '_old', $columns)) {
                 $columnType = Type::getType($mapping['type']);
